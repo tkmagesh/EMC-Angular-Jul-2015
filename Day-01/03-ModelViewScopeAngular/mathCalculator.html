@@ -35,13 +35,19 @@
 
     angular.module("calculatorApp", [])
         .run(function($rootScope){
-            $rootScope.calculator = calculator;
+
+            $rootScope.appName = "Math Calculator";
+            console.dir($rootScope);
+        })
+        .controller("calculatorController", function($scope){
+            console.dir($scope);
+            $scope.calculator = calculator;
         })
     </script>
 </head>
 <body ng-app="calculatorApp">
-    <h1>Math Calculator</h1>
-    <div class="content">
+    <h1 ng-bind="appName"></h1>
+    <div class="content" ng-controller="calculatorController">
         <input type="text" ng-model="calculator.number1">
         <select name="" id="" ng-model="calculator.operation">
             <option value="add">add</option>
@@ -51,7 +57,7 @@
         </select>
         <input type="text" ng-model="calculator.number2">
         <input type="button" value="Calculate" ng-click="calculator.calculate()">
-        <div id="divResult" ng-bind="calculator.result">[Result]</div>
+        <div id="divResult" ng-bind="calculator.result | currency:'Rs'">[Result]</div>
     </div>
 </body>
 </html>

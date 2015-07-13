@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bug Tracker</title>
+    <style>
+        h1{
+            border-top: 2px solid blue;
+            border-bottom: 2px solid blue;
+            padding: 10px;
+            background-color: lightblue;
+        }
+        div{
+            margin-bottom: 5px;
+        }
+        li{
+            list-style: none;
+            border : 2px solid gray;
+            background-color: lightgray;
+            padding : 5px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        ol{
+            width: 50%;
+        }
+        .closed {
+            color : red;
+            text-decoration: line-through;
+            font-style: italic;
+            font-weight: bold;
+        }
+    </style>
+    <!--
+    Use cases
+    =========
+    1. List the bugs
+    2. Add a new bug
+    3. Toggle the 'closed' status of a bug
+    4. Remove Closed bugs
+    5. Display stats
+    6. Search for the bugs
+    7. Sort the bugs
+    8. Display the "createdAt"
+    9. Persist the bugs in the storage
+    10. Make the storage option (localStorage or sessionStorage) configurable
+    11. Persist the bugs in the server
+    12. Enable routing
+    13. Add 'project' support
+
+    -->
+</head>
+<body>
+    <h1>Bug Tracker</h1>
+    <div class="stats"></div>
+    <div class="search"></div>
+    <div class="content">
+        <label for="">Bug :</label>
+        <input type="text" name="" id="">
+        <input type="button" value="Add New">
+        <input type="button" value="Remove Closed">
+        <ol>
+            <li>A new bug</li>
+            <li class="closed">An old bug [closed]</li>
+        </ol>
+    </div>
+</body>
+</html>
