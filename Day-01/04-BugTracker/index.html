@@ -20,6 +20,7 @@
             padding : 5px;
             border-radius: 4px;
             margin-bottom: 5px;
+            cursor: pointer;
         }
         ol{
             width: 50%;
@@ -30,13 +31,16 @@
             font-style: italic;
             font-weight: bold;
         }
+        .stats span{
+            font-size: 16pt;
+        }
     </style>
     <!--
     Use cases
     =========
     1. List the bugs
     2. Add a new bug
-    3. Toggle the 'closed' status of a bug
+    3. Toggle the 'closed' status of a bug (use ng-class)
     4. Remove Closed bugs
     5. Display stats
     6. Search for the bugs
@@ -49,19 +53,37 @@
     13. Add 'project' support
 
     -->
+    <script src="angular.js"></script>
+    <script>
+        var bugTrackerApp = angular.module("bugTrackerApp", []);
+        bugTrackerApp.controller("bugsController", function($scope){
+            $scope.bugs = [
+                {name : "Stack overflow error", isClosed : false},
+                {name : "Object reference not found", isClosed : false},
+                {name : "Invalid operation performed", isClosed : false}
+            ];
+            $scope.newBug = ''
+            $scope.addNew = function(){
+                $scope.bugs.push($scope.newBug);
+                $scope.newBug = '';
+            };
+            $scope.toggle = function(bug){
+                bug.isClosed = !bug.isClosed;
+            }
+        });
+    </script>
 </head>
-<body>
+<body ng-app="bugTrackerApp" ng-controller="bugsController">
     <h1>Bug Tracker</h1>
-    <div class="stats"></div>
+    <div class="stats" ><span class="closed"># of closed bugs </span> / <span>{{bugs.length}}</span></div>
     <div class="search"></div>
     <div class="content">
         <label for="">Bug :</label>
-        <input type="text" name="" id="">
-        <input type="button" value="Add New">
+        <input type="text" name="" id="" ng-model="newBug">
+        <input type="button" value="Add New" ng-click="addNew()">
         <input type="button" value="Remove Closed">
         <ol>
-            <li>A new bug</li>
-            <li class="closed">An old bug [closed]</li>
+            <li ng-repeat="bug in bugs" ng-click="toggle(bug)">{{bug}}</li>
         </ol>
     </div>
 </body>
