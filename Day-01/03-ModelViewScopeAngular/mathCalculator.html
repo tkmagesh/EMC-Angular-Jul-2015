@@ -9,20 +9,49 @@
             font-size: 28pt;
         }
     </style>
+    <script src="angular.js"></script>
+    <script>
+        var calculator = {
+            result : 0,
+            number1 : 0,
+            number2 : 0,
+            operation : '',
+            calculate : function(){
+                this[this.operation]();
+            },
+            add : function(){
+                this.result = parseInt(this.number1,10) + parseInt(this.number2,10);
+            },
+            subtract : function(){
+                this.result = parseInt(this.number1,10) - parseInt(this.number2,10);
+            },
+            multiply : function(){
+                this.result = parseInt(this.number1,10) * parseInt(this.number2,10);
+            },
+            divide : function(){
+                this.result = parseInt(this.number1,10) / parseInt(this.number2,10);
+            }
+        };
+
+    angular.module("calculatorApp", [])
+        .run(function($rootScope){
+            $rootScope.calculator = calculator;
+        })
+    </script>
 </head>
-<body>
+<body ng-app="calculatorApp">
     <h1>Math Calculator</h1>
     <div class="content">
-        <input type="text">
-        <select name="" id="">
+        <input type="text" ng-model="calculator.number1">
+        <select name="" id="" ng-model="calculator.operation">
             <option value="add">add</option>
             <option value="subtract">subtract</option>
             <option value="multiply">multiply</option>
             <option value="divide">divide</option>
         </select>
-        <input type="text">
-        <input type="button" value="Calculate">
-        <div id="divResult">[Result]</div>
+        <input type="text" ng-model="calculator.number2">
+        <input type="button" value="Calculate" ng-click="calculator.calculate()">
+        <div id="divResult" ng-bind="calculator.result">[Result]</div>
     </div>
 </body>
 </html>
