@@ -39,23 +39,7 @@
     }
 
     //View
-    $(function(){
-        angular.bootstrap(document.body,[]);
-        window.scope = angular.element(document.body).scope();
-
-        scope.calculator = new SalaryCalculator();
-
-        $("#txtBasic").change(function(){
-            var self = this;
-            scope.$apply(function(){
-                scope.calculator.basic = self.value;
-            });
-        });
-        scope.$watch("calculator.basic", function(newValue, oldValue){
-            $("#txtBasic").val(newValue);
-        });
-
-        $("#txtHra").change(function(){
+    /*$("#txtHra").change(function(){
             var self = this;
             scope.$apply(function(){
                 scope.calculator.hra = self.value;
@@ -93,11 +77,58 @@
             $("#divResult").html(newValue);
         });
 
-        $("#btnCalculate").click(function(){
+        */
+    $(function(){
+        angular.bootstrap(document.body,[]);
+        window.scope = angular.element(document.body).scope();
+
+        /*$("*[app-init]").each(function(index, element){
+            var $element = $(element),
+                expr = $element.attr("app-init");
             scope.$apply(function(){
-                scope.calculator.calculate();
+                scope.$eval(expr);
+            });
+        });*/
+
+        scope.calculator = new SalaryCalculator();
+
+        $("*[app-model]").each(function(index, element){
+            var $element = $(element);
+            var model = $element.attr("app-model");
+            $element.change(function(){
+                var self = this;
+                scope.$apply(function(){
+                    var expr = model + ' = ' + self.value;
+                    scope.$eval(expr);
+                });
+            });
+            scope.$watch(model, function(newValue, oldValue){
+                $element.val(newValue);
             });
         });
+
+
+
+        $("[app-bind]").each(function(index,element){
+            var $element = $(element);
+            var expr = $element.attr("app-bind");
+            scope.$watch(expr, function(newValue, oldValue){
+                $element.html(newValue);
+            });
+        })
+
+        $("*[app-click]").each(function(index, element){
+            var $element = $(element),
+                expr = $element.attr("app-click");
+            $element.click(function(){
+                scope.$apply(function(){
+                    scope.$eval(expr);
+                });
+            });
+        })
+
+
+
 
     });
     </script>
@@ -106,17 +137,28 @@
     <h1>Salary Calculator</h1>
     <hr>
     <div class="content">
-        <div class="field"><label for="">Basic :</label><input type="text" name="" id="txtBasic"></div>
-        <div class="field"><label for="">HRA :</label><input type="text" name="" id="txtHra"></div>
-        <div class="field"><label for="">DA :</label><input type="text" name="" id="txtDa"></div>
+        <div class="field">
+            <label for="">Basic :</label>
+            <input type="text" name="" id="txtBasic" app-model="calculator.basic">
+        </div>
+        <div class="field">
+            <label for="">HRA :</label>
+            <input type="text" name="" id="txtHra" app-model="calculator.hra">
+        </div>
+        <div class="field">
+            <label for="">DA :</label>
+            <input type="text" name="" id="txtDa" app-model="calculator.da">
+        </div>
         <div class="field">
             <label for="">Tax %:</label>
-            <input type="range" name="" id="rangeTax" min="0" max="30" value="0">
-            <span id="spanTax">[Tax]</span>
+            <input type="range" name="" id="rangeTax" min="0" max="30" app-model="calculator.tax">
+            <span id="spanTax" app-bind="calculator.tax">[Tax]</span>
         </div>
-        <div class="field"><input type="button" value="Calculate" id="btnCalculate"></div>
         <div class="field">
-            <div id="divResult">[Salary]</div>
+            <input type="button" value="Calculate" id="btnCalculate" app-click="calculator.calculate()">
+        </div>
+        <div class="field">
+            <div id="divResult" app-bind="calculator.salary">[Salary]</div>
         </div>
     </div>
 </body>
