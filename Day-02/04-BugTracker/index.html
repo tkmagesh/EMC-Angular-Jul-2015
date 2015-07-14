@@ -44,6 +44,16 @@
 
         angular.module("bugTrackerApp", ["utils"]);
 
+        angular.module("bugTrackerApp").config(function(bugStoreProvider){
+            console.log("app through the config");
+            console.log("bugStore in config", bugStoreProvider);
+        });
+
+        angular.module("bugTrackerApp").run(function(bugStore){
+           console.log("app through the run");
+           console.log("bugStore in run", bugStore);
+        });
+
         angular.module("bugTrackerApp").factory("Bug", function getBug(){
             function Bug(defaults){
                 defaults = defaults || {};
@@ -70,7 +80,8 @@
             return Bug;
         })());*/
 
-        angular.module("bugTrackerApp").factory("bugStore", function(Bug, $window){
+        /*bugStore as 'Factory'*/
+        /*angular.module("bugTrackerApp").factory("bugStore", function(Bug, $window){
             var storage = $window.localStorage;
             return {
                 getAll : function(){
@@ -91,10 +102,39 @@
                     store.removeItem(bug.id);
                 }
             }
+        });*/
+
+
+        /* bugStore as a 'Provider' that allows the user of the api to configure the bugStore to use either 'localStorage' or 'sessionStorage'*/
+
+        angular.module("bugTrackerApp").provider("bugStore", function(){
+            console.log("outer factory triggered");
+            return {
+                $get : function(Bug, $window){
+                        console.log("inner factory triggered");
+                        var storage = $window.localStorage;
+                        return {
+                            getAll : function(){
+                                var result = [];
+                                for(var i=0; i<storage.length; i++){
+                                    var key = storage.key(i);
+                                    var bugDataAsString = storage.getItem(key);
+                                    var bugData = angular.fromJson(bugDataAsString);
+                                    var bug = new Bug(bugData);
+                                    result.push(bug);
+                                }
+                                return result;
+                            },
+                            save : function(bug){
+                                storage.setItem(bug.id, angular.toJson(bug));
+                            },
+                            remove : function(bug){
+                                store.removeItem(bug.id);
+                            }
+                        }
+                    }
+            }
         });
-
-
-
         angular.module("bugTrackerApp").controller("bugsController", function($scope, Bug, bugStore){
             $scope.bugs = bugStore.getAll();
             $scope.newBug = ''
