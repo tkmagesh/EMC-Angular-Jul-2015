@@ -14,7 +14,7 @@
     5. Display stats -  done
     6. Search for the bugs - done
     7. Sort the bugs - done
-    8. Display the "createdAt"
+    8. Display the "createdAt" - done
     9. Persist the bugs in the storage
     10. Make the storage option (localStorage or sessionStorage) configurable
     11. Persist the bugs in the server
@@ -23,6 +23,7 @@
 
     -->
     <script src="angular.js"></script>
+    <script src="moment.js"></script>
     <script>
 
 
@@ -34,6 +35,7 @@
                 defaults = defaults || {};
                 this.name = defaults.name || '';
                 this.isClosed = defaults.isClosed || false;
+                this.createdAt = defaults.createdAt || new Date();
             }
             Bug.prototype.toggle = function(){
                 this.isClosed = !this.isClosed;
@@ -53,13 +55,21 @@
             return Bug;
         })());*/
 
-        bugTrackerApp.controller("bugsController", function($scope, Bug){
-            $scope.bugs = [
-                new Bug({name : "Stack overflow error", isClosed : false}),
-                new Bug({name : "Object reference not found", isClosed : true}),
-                new Bug({name : "Invalid operation performed", isClosed : true}),
-                new Bug({name : "Server communication error", isClosed : false})
-            ];
+        bugTrackerApp.factory("bugStore", function(Bug){
+            return {
+                getAll : function(){
+                    return [
+                        new Bug({name : "Stack overflow error", isClosed : false, createdAt : new Date(2015, 6, 13)}),
+                        new Bug({name : "Object reference not found", isClosed : true, createdAt : new Date(2015, 6, 14)}),
+                        new Bug({name : "Invalid operation performed", isClosed : true, createdAt : new Date(2015, 6, 12)}),
+                        new Bug({name : "Server communication error", isClosed : false, createdAt : new Date(2015, 5, 13)})
+                    ];
+                }
+            }
+        })
+
+        bugTrackerApp.controller("bugsController", function($scope, Bug, bugStore){
+            $scope.bugs = bugStore.getAll();
             $scope.newBug = ''
             $scope.addNew = function(){
                 $scope.bugs.push(new Bug({
@@ -110,6 +120,13 @@
                 return data.length < trimLength ? data : data.substr(0,trimLength) + "..."
             }
         });
+
+        bugTrackerApp.value("momentApi", moment);
+        bugTrackerApp.filter("toMoment", function(momentApi){
+            return function(data){
+                return momentApi(data).fromNow();
+            };
+        })
     </script>
 </head>
 <body ng-app="bugTrackerApp" ng-controller="bugsController">
@@ -142,11 +159,14 @@
         <input type="button" value="Add New" ng-click="addNew()">
         <input type="button" value="Remove Closed" ng-click="removeClosed()">
         <ol>
-            <li
-                ng-repeat="bug in bugs | filter:searchBug | orderBy:sortBugBy.attrName: sortBugBy.descending"
-                ng-click="toggle(bug)"
-                ng-class="{closed : bug.isClosed}"
-                >{{bug.name | trimText:30}}</li>
+            <li ng-repeat="bug in bugs | filter:searchBug | orderBy:sortBugBy.attrName: sortBugBy.descending"
+            > <div>
+                <div class="title" ng-click="toggle(bug)" ng-class="{closed : bug.isClosed}">
+                    {{bug.name | trimText:30}}
+                </div>
+                <div class="timestamp">{{bug.createdAt | toMoment}}</div>
+            </div>
+            </li>
         </ol>
     </div>
 </body>
