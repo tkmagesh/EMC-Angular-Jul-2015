@@ -45,8 +45,7 @@
         angular.module("bugTrackerApp", ["utils"]);
 
         angular.module("bugTrackerApp").config(function(bugStoreProvider){
-            console.log("app through the config");
-            console.log("bugStore in config", bugStoreProvider);
+            bugStoreProvider.setStorage("local");
         });
 
         angular.module("bugTrackerApp").run(function(bugStore){
@@ -108,11 +107,18 @@
         /* bugStore as a 'Provider' that allows the user of the api to configure the bugStore to use either 'localStorage' or 'sessionStorage'*/
 
         angular.module("bugTrackerApp").provider("bugStore", function(){
-            console.log("outer factory triggered");
+            var _storageOption = "localStorage";
             return {
+                setStorage : function(option){
+                    if (option === "local"){
+                        _storageOption = "localStorage";
+                    } else {
+                        _storageOption = "sessionStorage";
+                    }
+                },
                 $get : function(Bug, $window){
                         console.log("inner factory triggered");
-                        var storage = $window.localStorage;
+                        var storage = $window[_storageOption];
                         return {
                             getAll : function(){
                                 var result = [];
