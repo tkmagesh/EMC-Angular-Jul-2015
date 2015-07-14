@@ -11,9 +11,9 @@
     2. Add a new bug - done
     3. Toggle the 'closed' status of a bug (use ng-class) - done
     4. Remove Closed bugs - done
-    5. Display stats - (partially done)
-    6. Search for the bugs
-    7. Sort the bugs
+    5. Display stats -  done
+    6. Search for the bugs - done
+    7. Sort the bugs - done
     8. Display the "createdAt"
     9. Persist the bugs in the storage
     10. Make the storage option (localStorage or sessionStorage) configurable
@@ -24,21 +24,51 @@
     -->
     <script src="angular.js"></script>
     <script>
+
+
+
         var bugTrackerApp = angular.module("bugTrackerApp", []);
-        bugTrackerApp.controller("bugsController", function($scope){
+
+        bugTrackerApp.factory("Bug", function getBug(){
+            function Bug(defaults){
+                defaults = defaults || {};
+                this.name = defaults.name || '';
+                this.isClosed = defaults.isClosed || false;
+            }
+            Bug.prototype.toggle = function(){
+                this.isClosed = !this.isClosed;
+            }
+            return Bug;
+        });
+
+       /* bugTrackerApp.value("Bug", (function getBug(){
+            function Bug(defaults){
+                defaults = defaults || {};
+                this.name = defaults.name || '';
+                this.isClosed = defaults.isClosed || false;
+            }
+            Bug.prototype.toggle = function(){
+                this.isClosed = !this.isClosed;
+            }
+            return Bug;
+        })());*/
+
+        bugTrackerApp.controller("bugsController", function($scope, Bug){
             $scope.bugs = [
-                {name : "Stack overflow error", isClosed : false},
-                {name : "Object reference not found", isClosed : true},
-                {name : "Invalid operation performed", isClosed : true},
-                {name : "Server communication error", isClosed : false}
+                new Bug({name : "Stack overflow error", isClosed : false}),
+                new Bug({name : "Object reference not found", isClosed : true}),
+                new Bug({name : "Invalid operation performed", isClosed : true}),
+                new Bug({name : "Server communication error", isClosed : false})
             ];
             $scope.newBug = ''
             $scope.addNew = function(){
-                $scope.bugs.push($scope.newBug);
+                $scope.bugs.push(new Bug({
+                    name : $scope.newBug
+                    }));
                 $scope.newBug = '';
             };
             $scope.toggle = function(bug){
-                bug.isClosed = !bug.isClosed;
+                bug.toggle();
             };
             $scope.getClosedCount = function(){
                 return $scope.bugs.filter(function(bug){
@@ -54,11 +84,41 @@
             };
 
         });
+        /*bugTrackerApp.filter("closedCount", function(){
+            return function(data){
+                var result = 0;
+                for(var i=0; i<data.length; i++)
+                    if (data[i].isClosed)
+                        ++result;
+                return result;
+            }
+        })*/
+        bugTrackerApp.filter("closedCount", function($filter){
+            return function(data){
+                var builtInFilter = $filter('filter');
+                return builtInFilter(data, {isClosed : true}).length;
+            }
+        });
+        bugTrackerApp.value("appDefaults", {
+            trimLength : 20,
+            bugDefault : {name : null, isClosed : true}
+        });
+
+        bugTrackerApp.filter("trimText", function(appDefaults){
+            return function(data, trimLength){
+                trimLength = trimLength || appDefaults.trimLength;
+                return data.length < trimLength ? data : data.substr(0,trimLength) + "..."
+            }
+        });
     </script>
 </head>
 <body ng-app="bugTrackerApp" ng-controller="bugsController">
     <h1>Bug Tracker</h1>
-    <div class="stats" ><span class="closed">{{getClosedCount()}}</span> / <span>{{bugs.length}}</span></div>
+    <div class="stats" >
+    <!--<span class="closed">{{(bugs | filter:{isClosed:true}).length}}</span> -->
+    <span class="closed">{{bugs | closedCount}}</span>
+    /
+    <span>{{bugs.length}}</span></div>
     <div class="search">
         <label for="">Search :</label>
         <input type="text" ng-model="searchBug.name">
@@ -86,7 +146,7 @@
                 ng-repeat="bug in bugs | filter:searchBug | orderBy:sortBugBy.attrName: sortBugBy.descending"
                 ng-click="toggle(bug)"
                 ng-class="{closed : bug.isClosed}"
-                >{{bug.name | lowercase}}</li>
+                >{{bug.name | trimText:30}}</li>
         </ol>
     </div>
 </body>
