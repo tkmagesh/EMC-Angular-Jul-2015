@@ -41,13 +41,7 @@
     <script src="utils.js"></script>
     <script>
 
-        angular.element(document).ready(function(){
-            var injector = angular.injector(["bugTrackerApp"]);
-            injector.invoke(function($rootScope, $compile, $document){
-                $compile($document)($rootScope);
-                $rootScope.$digest();
-            });
-        });
+
 
         angular.module("bugTrackerApp", ["utils"]);
 
@@ -55,10 +49,7 @@
             bugStoreProvider.setStorage("local");
         });
 
-        angular.module("bugTrackerApp").run(function(bugStore){
-           console.log("app through the run");
-           console.log("bugStore in run", bugStore);
-        });
+
 
         angular.module("bugTrackerApp").factory("Bug", function getBug(){
             function Bug(defaults){
@@ -74,41 +65,7 @@
             return Bug;
         });
 
-       /* angular.module("bugTrackerApp").value("Bug", (function getBug(){
-            function Bug(defaults){
-                defaults = defaults || {};
-                this.name = defaults.name || '';
-                this.isClosed = defaults.isClosed || false;
-            }
-            Bug.prototype.toggle = function(){
-                this.isClosed = !this.isClosed;
-            }
-            return Bug;
-        })());*/
 
-        /*bugStore as 'Factory'*/
-        /*angular.module("bugTrackerApp").factory("bugStore", function(Bug, $window){
-            var storage = $window.localStorage;
-            return {
-                getAll : function(){
-                    var result = [];
-                    for(var i=0; i<storage.length; i++){
-                        var key = storage.key(i);
-                        var bugDataAsString = storage.getItem(key);
-                        var bugData = angular.fromJson(bugDataAsString);
-                        var bug = new Bug(bugData);
-                        result.push(bug);
-                    }
-                    return result;
-                },
-                save : function(bug){
-                    storage.setItem(bug.id, angular.toJson(bug));
-                },
-                remove : function(bug){
-                    store.removeItem(bug.id);
-                }
-            }
-        });*/
 
 
         /* bugStore as a 'Provider' that allows the user of the api to configure the bugStore to use either 'localStorage' or 'sessionStorage'*/
@@ -148,8 +105,28 @@
                     }
             }
         });
-        angular.module("bugTrackerApp").controller("bugsController", function($scope, Bug, bugStore){
-            $scope.bugs = bugStore.getAll();
+
+        angular.module("bugTrackerApp").service("bugService", function($http, Bug, $q){
+            this.getAll = function(){
+                var deferred = $q.defer();
+                var promise = $http.get("http://localhost:3000/bugs");
+                promise.then(function(response){
+                    var result = response.data.map(function(bugData) { return new Bug(bugData); });
+                    deferred.resolve(result);
+                });
+                return deferred.promise;
+            }
+        });
+
+
+        angular.module("bugTrackerApp").controller("bugsController", function($scope, Bug, bugStore, bugService){
+            //$scope.bugs = bugStore.getAll();
+            $scope.bugs = [];
+
+            bugService.getAll().then(function(bugs){
+                $scope.bugs = bugs;
+            });
+
             $scope.newBug = ''
             $scope.addNew = function(){
                 var newBug = new Bug({
@@ -192,7 +169,7 @@
         });
     </script>
 </head>
-<body   ng-controller="bugsController">
+<body ng-app="bugTrackerApp"   ng-controller="bugsController">
     <h1>Bug Tracker</h1>
     <div class="stats" >
     <!--<span class="closed">{{(bugs | filter:{isClosed:true}).length}}</span> -->
