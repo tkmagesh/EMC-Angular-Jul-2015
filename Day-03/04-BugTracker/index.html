@@ -148,8 +148,10 @@
                     }
             }
         });
-        angular.module("bugTrackerApp").controller("bugsController", function($scope, Bug, bugStore){
+        angular.module("bugTrackerApp")
+            .controller("bugsController", function($scope, Bug, bugStore, projectsStore){
             $scope.bugs = bugStore.getAll();
+            $scope.projects = projectsStore.getAll();
             $scope.newBug = ''
             $scope.addNew = function(){
                 var newBug = new Bug({
@@ -190,47 +192,101 @@
                 //return data;
             }
         });
+
+        angular.module("bugTrackerApp")
+            .service("projectsStore", function(){
+
+            var projectsList = [
+                {id : 1, name : "Inventory"},
+                {id : 2, name : "Payroll"},
+            ];
+            this.addNew = function(projectName){
+                var newProjectId = projectsList.reduce(function(result, project){
+                    return result > project.id ? result : project.id;
+                },0) + 1;
+
+                var newProject = {
+                    id : newProjectId,
+                    name : projectName
+                };
+                projectsList.push(newProject);
+                return newProject;
+            };
+
+            this.getAll = function(){
+                return projectsList.slice(0);
+            }
+        });
+        angular.module("bugTrackerApp")
+            .controller("projectsController", function($scope, projectsStore){
+            $scope.projects = projectsStore.getAll();
+
+            $scope.addNewProject = function(projectName){
+                var newProject = projectsStore.addNew(projectName);
+                $scope.projects.push(newProject);
+            };
+        });
     </script>
 </head>
 <body   ng-controller="bugsController">
     <h1>Bug Tracker</h1>
-    <div class="stats" >
-    <!--<span class="closed">{{(bugs | filter:{isClosed:true}).length}}</span> -->
-    <span class="closed">{{bugs | closedCount}}</span>
-    /
-    <span>{{bugs.length}}</span></div>
-    <div class="search">
-        <label for="">Search :</label>
-        <input type="text" ng-model="searchBug.name">
-        <label for="">Closed ?</label>
-        <input type="checkbox" ng-model="searchBug.isClosed" >
-        <a href="#" ng-click="searchBug.isClosed = undefined">Show All</a>
-    </div>
-    <div class="Order">
-        <label for="">Order By:</label>
-        <!--<input type="text" ng-model="sortBugBy.attrName">-->
-        <select ng-model="sortBugBy.attrName">
-            <option value="name">name</option>
-            <option value="isClosed">isClosed</option>
-        </select>
-        <label for="">Descending ? :</label>
-        <input type="checkbox" name="" id="" ng-model="sortBugBy.descending">
-    </div>
-    <div class="content">
-        <label for="">Bug :</label>
-        <input type="text" name="" id="" ng-model="newBug">
-        <input type="button" value="Add New" ng-click="addNew()">
-        <input type="button" value="Remove Closed" ng-click="removeClosed()">
-        <ol>
-            <li ng-repeat="bug in bugs | filter:searchBug | orderBy:sortBugBy.attrName: sortBugBy.descending"
-            > <div>
-                <div class="title" ng-click="toggle(bug)" ng-class="{closed : bug.isClosed}">
-                    {{bug.name | trimText:30}}
+    <section>
+
+        <h3>Projects</h3>
+        <div ng-controller="projectsController">
+            <label for="">Project :</label>
+            <input type="text" name="" id="" ng-model="projectName">
+            <input type="button" value="Add Project" ng-click="addNewProject(projectName)"></input>
+            <ol class="projectList" ng-repeat="project in projects">
+                <li>{{project}}</li>
+            </ol>
+        </div>
+    </section>
+    <section>
+
+        <h3>Bugs</h3>
+        <div class="stats" >
+        <!--<span class="closed">{{(bugs | filter:{isClosed:true}).length}}</span> -->
+        <span class="closed">{{bugs | closedCount}}</span>
+        /
+        <span>{{bugs.length}}</span></div>
+        <div class="search">
+            <label for="">Search :</label>
+            <input type="text" ng-model="searchBug.name">
+            <label for="">Closed ?</label>
+            <input type="checkbox" ng-model="searchBug.isClosed" >
+            <a href="#" ng-click="searchBug.isClosed = undefined">Show All</a>
+        </div>
+        <div class="Order">
+            <label for="">Order By:</label>
+            <!--<input type="text" ng-model="sortBugBy.attrName">-->
+            <select ng-model="sortBugBy.attrName">
+                <option value="name">name</option>
+                <option value="isClosed">isClosed</option>
+            </select>
+            <label for="">Descending ? :</label>
+            <input type="checkbox" name="" id="" ng-model="sortBugBy.descending">
+        </div>
+        <div class="content">
+            <label for="">Bug :</label>
+            <input type="text" name="" id="" ng-model="newBug">
+            <select name="" id="" ng-model="project">
+                <option ng-repeat="project in projects">{{project.name}}</option>
+            </select>
+            <input type="button" value="Add New" ng-click="addNew()">
+            <input type="button" value="Remove Closed" ng-click="removeClosed()">
+            <ol class="bugsList">
+                <li ng-repeat="bug in bugs | filter:searchBug | orderBy:sortBugBy.attrName: sortBugBy.descending"
+                > <div>
+                    <div class="title" ng-click="toggle(bug)" ng-class="{closed : bug.isClosed}">
+                        {{bug.name | trimText:30}}
+                    </div>
+                    <div class="timestamp">{{bug.createdAt | toMoment}}</div>
                 </div>
-                <div class="timestamp">{{bug.createdAt | toMoment}}</div>
-            </div>
-            </li>
-        </ol>
-    </div>
+                </li>
+            </ol>
+        </div>
+    </section>
+
 </body>
 </html>
