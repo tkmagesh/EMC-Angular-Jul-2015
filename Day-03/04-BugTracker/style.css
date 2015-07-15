@@ -36,6 +36,9 @@ ol.bugsList{
     font-size: 18pt;
 
 }
+.title .projectName{
+    font-size: small;
+}
 .projectList li{
     list-style: none;
     float: left;
@@ -45,8 +48,20 @@ ol.bugsList{
     background-color: lightgray;
     padding : 5px;
     border-radius: 4px;
+    cursor: pointer;
 }
 
+.projectList li.selected{
+    list-style: none;
+    float: left;
+    display: inline;
+    margin-right: 10px;
+    border : 2px solid red;
+    background-color: lightpink;
+    padding : 5px;
+    border-radius: 4px;
+    cursor: pointer;
+}
 section{
     clear : both;
     margin-bottom: 10px;

@@ -41,13 +41,14 @@
     <script src="utils.js"></script>
     <script>
 
-        angular.element(document).ready(function(){
+
+       /* angular.element(document).ready(function(){
             var injector = angular.injector(["bugTrackerApp"]);
             injector.invoke(function($rootScope, $compile, $document){
                 $compile($document)($rootScope);
                 $rootScope.$digest();
             });
-        });
+        });*/
 
         angular.module("bugTrackerApp", ["utils"]);
 
@@ -64,6 +65,7 @@
             function Bug(defaults){
                 defaults = defaults || {};
                 this.id = defaults.id || Date.now().toString();
+                this.projectId = defaults.projectId || 0;
                 this.name = defaults.name || '';
                 this.isClosed = defaults.isClosed || false;
                 this.createdAt = defaults.createdAt || new Date();
@@ -149,14 +151,20 @@
             }
         });
         angular.module("bugTrackerApp")
-            .controller("bugsController", function($scope, Bug, bugStore, projectsStore){
+            .controller("bugsController",
+                        function($scope, Bug, bugStore, projectsStore, $rootScope){
             $scope.bugs = bugStore.getAll();
             $scope.projects = projectsStore.getAll();
+            $rootScope.$on("newProject", function(){
+                $scope.projects = projectsStore.getAll();
+            });
             $scope.newBug = ''
             $scope.addNew = function(){
+                console.log("$scope.project =", $scope.project);
                 var newBug = new Bug({
-                    name : $scope.newBug
-                    });
+                    name : $scope.newBug,
+                    projectId : $scope.project.id
+                });
                 bugStore.save(newBug);
                 $scope.bugs.push(newBug);
                 $scope.newBug = '';
@@ -194,7 +202,7 @@
         });
 
         angular.module("bugTrackerApp")
-            .service("projectsStore", function(){
+            .service("projectsStore", function($rootScope){
 
             var projectsList = [
                 {id : 1, name : "Inventory"},
@@ -210,6 +218,7 @@
                     name : projectName
                 };
                 projectsList.push(newProject);
+                $rootScope.$broadcast("newProject");
                 return newProject;
             };
 
@@ -226,9 +235,16 @@
                 $scope.projects.push(newProject);
             };
         });
+        angular.module("bugTrackerApp")
+            .controller("appsController", function($scope){
+                $scope.selectedProject = {id : 1, name : "Inventory"};
+                $scope.setSelectedProject = function(project){
+                    $scope.selectedProject = project;
+                }
+        })
     </script>
 </head>
-<body   ng-controller="bugsController">
+<body ng-app="bugTrackerApp"   ng-controller="appsController">
     <h1>Bug Tracker</h1>
     <section>
 
@@ -238,11 +254,14 @@
             <input type="text" name="" id="" ng-model="projectName">
             <input type="button" value="Add Project" ng-click="addNewProject(projectName)"></input>
             <ol class="projectList" ng-repeat="project in projects">
-                <li>{{project}}</li>
+                <li
+                    ng-class="{selected : project.id === selectedProject.id}"
+                    ng-click="setSelectedProject(project)"
+                >{{project}}</li>
             </ol>
         </div>
     </section>
-    <section>
+    <section ng-controller="bugsController">
 
         <h3>Bugs</h3>
         <div class="stats" >
@@ -270,16 +289,17 @@
         <div class="content">
             <label for="">Bug :</label>
             <input type="text" name="" id="" ng-model="newBug">
-            <select name="" id="" ng-model="project">
-                <option ng-repeat="project in projects">{{project.name}}</option>
+            <select name="" id="" ng-model="project" ng-options="project.name for project in projects">
+                <!--<option ng-repeat="project in projects" value="{{project.id}}">{{project.name}}</option>-->
             </select>
             <input type="button" value="Add New" ng-click="addNew()">
             <input type="button" value="Remove Closed" ng-click="removeClosed()">
             <ol class="bugsList">
-                <li ng-repeat="bug in bugs | filter:searchBug | orderBy:sortBugBy.attrName: sortBugBy.descending"
+                <li ng-repeat="bug in bugs | filter:{projectId:selectedProject.id} | filter:searchBug | orderBy:sortBugBy.attrName: sortBugBy.descending"
                 > <div>
                     <div class="title" ng-click="toggle(bug)" ng-class="{closed : bug.isClosed}">
                         {{bug.name | trimText:30}}
+                        <div class="projectName">[{{bug.projectId}}]</div>
                     </div>
                     <div class="timestamp">{{bug.createdAt | toMoment}}</div>
                 </div>
