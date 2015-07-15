@@ -1,0 +1,49 @@
+
+
+    <section ng-controller="bugsController">
+
+        <h3>Bugs</h3>
+        <a href="#/projects">Projects</a>
+        <div class="stats" >
+        <!--<span class="closed">{{(bugs | filter:{isClosed:true}).length}}</span> -->
+        <span class="closed">{{bugs | closedCount}}</span>
+        /
+        <span>{{bugs.length}}</span></div>
+        <div class="search">
+            <label for="">Search :</label>
+            <input type="text" ng-model="searchBug.name">
+            <label for="">Closed ?</label>
+            <input type="checkbox" ng-model="searchBug.isClosed" >
+            <a href="#" ng-click="searchBug.isClosed = undefined">Show All</a>
+        </div>
+        <div class="Order">
+            <label for="">Order By:</label>
+            <!--<input type="text" ng-model="sortBugBy.attrName">-->
+            <select ng-model="sortBugBy.attrName">
+                <option value="name">name</option>
+                <option value="isClosed">isClosed</option>
+            </select>
+            <label for="">Descending ? :</label>
+            <input type="checkbox" name="" id="" ng-model="sortBugBy.descending">
+        </div>
+        <div class="content">
+            <label for="">Bug :</label>
+            <input type="text" name="" id="" ng-model="newBug">
+            <select name="" id="" ng-model="project" ng-options="project.name for project in projects">
+                <!--<option ng-repeat="project in projects" value="{{project.id}}">{{project.name}}</option>-->
+            </select>
+            <input type="button" value="Add New" ng-click="addNew()">
+            <input type="button" value="Remove Closed" ng-click="removeClosed()">
+            <ol class="bugsList">
+                <li ng-repeat="bug in bugs | filter:{projectId:selectedProject} | filter:searchBug | orderBy:sortBugBy.attrName: sortBugBy.descending"
+                > <div>
+                    <div class="title" ng-click="toggle(bug)" ng-class="{closed : bug.isClosed}">
+                        {{bug.name | trimText:30}}
+                        <div class="projectName">[{{bug.projectId}}]</div>
+                    </div>
+                    <div class="timestamp">{{bug.createdAt | toMoment}}</div>
+                </div>
+                </li>
+            </ol>
+        </div>
+    </section>

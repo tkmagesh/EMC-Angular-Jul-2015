@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bug Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <!--
+    Use cases
+    =========
+    1. List the bugs - done
+    2. Add a new bug - done
+    3. Toggle the 'closed' status of a bug (use ng-class) - done
+    4. Remove Closed bugs - done
+    5. Display stats -  done
+    6. Search for the bugs - done
+    7. Sort the bugs - done
+    8. Display the "createdAt" - done
+    9. Persist the bugs in the storage
+    10. Make the storage option (localStorage or sessionStorage) configurable
+    11. Persist the bugs in the server
+    12. Enable routing
+    13. Add 'project' support
+
+    localStorage
+    ============
+    window.localStorage
+        - key/value store
+        - key and value should be strings
+
+        - setItem(key, value)
+        - getItem(key) // -> value
+        - removeItem(key)
+        - key(index) // -> key
+        - clear()
+        - length
+
+    -->
+    <script src="angular.js"></script>
+    <script src="angular-route.js"></script>
+    <script src="moment.js"></script>
+
+    <script src="utils.js"></script>
+    <script>
+
+
+       /* angular.element(document).ready(function(){
+            var injector = angular.injector(["bugTrackerApp"]);
+            injector.invoke(function($rootScope, $compile, $document){
+                $compile($document)($rootScope);
+                $rootScope.$digest();
+            });
+        });*/
+
+        angular.module("bugTrackerApp", ["utils", "ngRoute"]);
+
+        angular.module("bugTrackerApp")
+            .config(function($routeProvider){
+
+            $routeProvider
+                .when("/projects", {
+                    templateUrl : "templates/projectsTemplate.html"
+                })
+                .when("/bugs", {
+                    templateUrl : "templates/bugsTemplate.html"
+                })
+                .when("/bugs/:projectId", {
+                    templateUrl : "templates/bugsTemplate.html"
+                })
+                .otherwise({
+                    redirectTo : "/projects"
+                });
+        });
+
+        angular.module("bugTrackerApp").config(function(bugStoreProvider){
+            bugStoreProvider.setStorage("local");
+        });
+
+        angular.module("bugTrackerApp").run(function(bugStore){
+           console.log("app through the run");
+           console.log("bugStore in run", bugStore);
+        });
+
+        angular.module("bugTrackerApp").factory("Bug", function getBug(){
+            function Bug(defaults){
+                defaults = defaults || {};
+                this.id = defaults.id || Date.now().toString();
+                this.projectId = defaults.projectId || 0;
+                this.name = defaults.name || '';
+                this.isClosed = defaults.isClosed || false;
+                this.createdAt = defaults.createdAt || new Date();
+            }
+            Bug.prototype.toggle = function(){
+                this.isClosed = !this.isClosed;
+            }
+            return Bug;
+        });
+
+       /* angular.module("bugTrackerApp").value("Bug", (function getBug(){
+            function Bug(defaults){
+                defaults = defaults || {};
+                this.name = defaults.name || '';
+                this.isClosed = defaults.isClosed || false;
+            }
+            Bug.prototype.toggle = function(){
+                this.isClosed = !this.isClosed;
+            }
+            return Bug;
+        })());*/
+
+        /*bugStore as 'Factory'*/
+        /*angular.module("bugTrackerApp").factory("bugStore", function(Bug, $window){
+            var storage = $window.localStorage;
+            return {
+                getAll : function(){
+                    var result = [];
+                    for(var i=0; i<storage.length; i++){
+                        var key = storage.key(i);
+                        var bugDataAsString = storage.getItem(key);
+                        var bugData = angular.fromJson(bugDataAsString);
+                        var bug = new Bug(bugData);
+                        result.push(bug);
+                    }
+                    return result;
+                },
+                save : function(bug){
+                    storage.setItem(bug.id, angular.toJson(bug));
+                },
+                remove : function(bug){
+                    store.removeItem(bug.id);
+                }
+            }
+        });*/
+
+
+        /* bugStore as a 'Provider' that allows the user of the api to configure the bugStore to use either 'localStorage' or 'sessionStorage'*/
+
+        angular.module("bugTrackerApp").provider("bugStore", function(){
+            var _storageOption = "localStorage";
+            return {
+                setStorage : function(option){
+                    if (option === "local"){
+                        _storageOption = "localStorage";
+                    } else {
+                        _storageOption = "sessionStorage";
+                    }
+                },
+                $get : function(Bug, $window){
+                        console.log("inner factory triggered");
+                        var storage = $window[_storageOption];
+                        return {
+                            getAll : function(){
+                                var result = [];
+                                for(var i=0; i<storage.length; i++){
+                                    var key = storage.key(i);
+                                    var bugDataAsString = storage.getItem(key);
+                                    var bugData = angular.fromJson(bugDataAsString);
+                                    var bug = new Bug(bugData);
+                                    result.push(bug);
+                                }
+                                return result;
+                            },
+                            save : function(bug){
+                                storage.setItem(bug.id, angular.toJson(bug));
+                            },
+                            remove : function(bug){
+                                store.removeItem(bug.id);
+                            }
+                        }
+                    }
+            }
+        });
+        angular.module("bugTrackerApp")
+            .controller("bugsController",
+                        function($scope, Bug, bugStore, projectsStore, $rootScope, $routeParams){
+            if ($routeParams.projectId){
+                $scope.setSelectedProject(parseInt($routeParams.projectId));
+            }
+            $scope.bugs = bugStore.getAll();
+            $scope.projects = projectsStore.getAll();
+            $rootScope.$on("newProject", function(){
+                $scope.projects = projectsStore.getAll();
+            });
+            $scope.newBug = ''
+            $scope.addNew = function(){
+                console.log("$scope.project =", $scope.project);
+                var newBug = new Bug({
+                    name : $scope.newBug,
+                    projectId : $scope.project.id
+                });
+                bugStore.save(newBug);
+                $scope.bugs.push(newBug);
+                $scope.newBug = '';
+            };
+            $scope.toggle = function(bug){
+                bug.toggle();
+                bugStore.save(bug);
+            };
+
+            $scope.removeClosed = function(){
+                for(var i=$scope.bugs.length -1; i>=0; i--){
+                    if ($scope.bugs[i].isClosed){
+                        bugStore.remove($scope.bugs[i]);
+                        $scope.bugs.splice(i,1);
+                    }
+                }
+            };
+
+        });
+        /*angular.module("bugTrackerApp").filter("closedCount", function(){
+            return function(data){
+                var result = 0;
+                for(var i=0; i<data.length; i++)
+                    if (data[i].isClosed)
+                        ++result;
+                return result;
+            }
+        })*/
+        angular.module("bugTrackerApp")
+            .filter("closedCount", function($filter){
+            return function(data){
+                var builtInFilter = $filter('filter');
+                return builtInFilter(data, {isClosed : true}).length;
+                //return data;
+            }
+        });
+
+        angular.module("bugTrackerApp")
+            .service("projectsStore", function($rootScope){
+
+            var projectsList = [
+                {id : 1, name : "Inventory"},
+                {id : 2, name : "Payroll"},
+            ];
+            this.addNew = function(projectName){
+                var newProjectId = projectsList.reduce(function(result, project){
+                    return result > project.id ? result : project.id;
+                },0) + 1;
+
+                var newProject = {
+                    id : newProjectId,
+                    name : projectName
+                };
+                projectsList.push(newProject);
+                $rootScope.$broadcast("newProject");
+                return newProject;
+            };
+
+            this.getAll = function(){
+                return projectsList.slice(0);
+            }
+        });
+        angular.module("bugTrackerApp")
+            .controller("projectsController", function($scope, projectsStore){
+            $scope.projects = projectsStore.getAll();
+
+            $scope.addNewProject = function(projectName){
+                var newProject = projectsStore.addNew(projectName);
+                $scope.projects.push(newProject);
+            };
+        });
+        angular.module("bugTrackerApp")
+            .controller("appsController", function($scope){
+                $scope.selectedProject = {id : 1, name : "Inventory"};
+                $scope.setSelectedProject = function(project){
+                    $scope.selectedProject = project;
+                }
+        })
+    </script>
+</head>
+<body ng-app="bugTrackerApp"   ng-controller="appsController">
+    <h1>Bug Tracker</h1>
+
+    <div ng-view></div>
+
+
+</body>
+</html>

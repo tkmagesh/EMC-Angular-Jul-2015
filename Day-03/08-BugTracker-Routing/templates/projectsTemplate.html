@@ -1,0 +1,16 @@
+ <section>
+
+        <h3>Projects</h3>
+        <a href="#/bugs">Bugs</a>
+        <div ng-controller="projectsController">
+            <label for="">Project :</label>
+            <input type="text" name="" id="" ng-model="projectName">
+            <input type="button" value="Add Project" ng-click="addNewProject(projectName)"></input>
+            <ol class="projectList" ng-repeat="project in projects">
+                <li
+                    ng-class="{selected : project.id === selectedProject}"
+                    ng-click="setSelectedProject(project.id)"
+                ><a href="#/bugs/{{project.id}}">{{project}}</a></li>
+            </ol>
+        </div>
+    </section>
